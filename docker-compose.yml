@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hospital-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: hospital_management_system
+      MYSQL_USER: hospital_app
+      MYSQL_PASSWORD: secure_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - hospital-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: hospital-backend
+    environment:
+      PORT: 5000
+      NODE_ENV: development
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: hospital_app
+      DB_PASSWORD: secure_password
+      DB_NAME: hospital_management_system
+      JWT_SECRET: your-super-secret-key-change-this-in-production
+      ENCRYPTION_KEY: your-32-char-encryption-key-here-xxx
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+      RATE_LIMIT_WINDOW: 15
+      RATE_LIMIT_MAX: 100
+    ports:
+      - "5000:5000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - hospital-network
+    volumes:
+      - ./backend/src:/app/src
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: hospital-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - hospital-network
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    volumes:
+      - ./frontend/src:/app/src
+
+volumes:
+  mysql_data:
+
+networks:
+  hospital-network:
+    driver: bridge
