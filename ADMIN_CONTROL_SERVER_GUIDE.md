@@ -2,7 +2,7 @@
 
 ## Overview
 
-The **Admin Control Server** is a centralized management system for controlling patient and doctor accounts, managing credentials, and monitoring system-wide data. It provides administrators with tools to:
+ a centralized management system for controlling patient and doctor accounts, managing credentials, and monitoring system-wide data. It provides administrators with tools to:
 
 - View and manage all patient accounts
 - Reset user passwords
